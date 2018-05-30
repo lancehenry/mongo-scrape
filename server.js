@@ -29,6 +29,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Use express.static to serve the public folder
 app.use(express.static('public'));
 
+// Handlebars
+var exphbs = require('express-handlebars');
+
+app.engine('handlebars', exphbs({ defaultLayout: 'main' }));
+app.set('view engine', 'handlebars');
+
 // Connect to the Mongo DB
 // mongoose.connect('mongodb://localhost/mongoNPR');
 var MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost/mongoNPR';
@@ -37,6 +43,22 @@ mongoose.Promise = Promise;
 mongoose.connect(MONGODB_URI);
 
 // Routes
+
+app.get('/', function(req, res) {
+
+  // Query the database to sort all entries
+  db.Article.find().sort({ _id: 1 })
+
+  // Execute the Articles to handlebars and render
+  .exec(function(err, doc) {
+    if (err) {
+      console.log(err);
+    } else {
+      var artcl = { article: doc };
+    };
+    res.render('index', artcl);
+  });
+});
 
 // GET route for scraping the NPR/arts website
 app.get('/scrape', function(req, res) {
@@ -69,7 +91,7 @@ app.get('/scrape', function(req, res) {
           console.log(dbArticle);
         })
         .catch(function(err) {
-          return res.json(err);
+          console.log(err);
         });
     });
     res.send('Scrape complete!');
